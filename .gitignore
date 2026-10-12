@@ -1,0 +1,13 @@
+/build/
+/build-*/
+/out/
+/.vs/
+/.vscode/
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.a
+/page-test-*.trace
