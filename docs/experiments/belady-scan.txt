@@ -1,0 +1,10 @@
+Frames  FIFO faults  LRU faults  OPT faults
+2       12           12          9
+3       9            10          7
+4       10           8           6
+5       5            5           5
+6       5            5           5
+
+Belady anomaly detected:
+FIFO faults increased from 9 to 10 when frames increased from 3 to 4.
+LRU and OPT curves: non-increasing.

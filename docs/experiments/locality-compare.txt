@@ -1,0 +1,6 @@
+
+Policy  Accesses  Hits      Faults    Replacements  Fault rate
+FIFO    13        6         7         4             53.85%
+LRU     13        8         5         2             38.46%
+OPT     13        8         5         2             38.46%
+OPT bound: verified (faults <= FIFO and LRU).
