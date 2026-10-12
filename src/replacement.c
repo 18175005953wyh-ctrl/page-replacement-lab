@@ -26,19 +26,22 @@ int simulate(const Trace *trace, size_t frame_count, ReplacementPolicy policy,
     PageFrame *frames;
     uint64_t clock = 0;
     size_t i, fifo = 0;
+    size_t *next_use = NULL;
     if (stats != NULL) memset(stats, 0, sizeof *stats);
     if (trace == NULL || stats == NULL || (trace->count > 0 && trace->pages == NULL) ||
-        frame_count < 1 || frame_count > MAX_FRAMES || (policy != POLICY_FIFO && policy != POLICY_LRU)) {
+        frame_count < 1 || frame_count > MAX_FRAMES ||
+        (policy != POLICY_FIFO && policy != POLICY_LRU && policy != POLICY_OPT)) {
         (void)snprintf(error, error_size, "Invalid simulation trace, frame count or policy"); return 0;
     }
     frames = calloc(frame_count, sizeof *frames);
     if (frames == NULL) { (void)snprintf(error, error_size, "Frame allocation failed"); return 0; }
+    if (policy == POLICY_OPT && !trace_next_use(trace, &next_use, error, error_size)) { free(frames); return 0; }
     for (i = 0; i < trace->count; ++i) {
         size_t slot = frame_count, empty = frame_count, j;
         SimulationStep step = {0};
         if (policy == POLICY_LRU) {
             if (clock == UINT64_MAX) {
-                free(frames); memset(stats, 0, sizeof *stats);
+                free(frames); free(next_use); memset(stats, 0, sizeof *stats);
                 (void)snprintf(error, error_size, "LRU clock overflow"); return 0;
             }
             ++clock;
@@ -59,6 +62,10 @@ int simulate(const Trace *trace, size_t frame_count, ReplacementPolicy policy,
                     slot = 0;
                     for (j = 1; j < frame_count; ++j)
                         if (frames[j].last_used < frames[slot].last_used) slot = j;
+                } else if (policy == POLICY_OPT) {
+                    slot = 0;
+                    for (j = 1; j < frame_count; ++j)
+                        if (frames[j].next_use > frames[slot].next_use) slot = j;
                 }
                 step.evicted = 1; step.evicted_page = frames[slot].page;
                 ++stats->replacements;
@@ -67,10 +74,11 @@ int simulate(const Trace *trace, size_t frame_count, ReplacementPolicy policy,
             if (policy == POLICY_FIFO) fifo = (slot + 1) % frame_count;
         }
         if (policy == POLICY_LRU) frames[slot].last_used = clock;
+        if (policy == POLICY_OPT) frames[slot].next_use = next_use[i];
         ++stats->accesses;
         step.frames = frames; step.frame_count = frame_count;
         if (observer != NULL) observer(&step, context);
     }
-    free(frames);
+    free(frames); free(next_use);
     return stats_are_valid(stats);
 }
