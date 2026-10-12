@@ -80,5 +80,38 @@ int simulate(const Trace *trace, size_t frame_count, ReplacementPolicy policy,
         if (observer != NULL) observer(&step, context);
     }
     free(frames); free(next_use);
-    return stats_are_valid(stats);
+    if (!stats_are_valid(stats)) {
+        (void)snprintf(error, error_size, "Internal statistics invariant failed"); return 0;
+    }
+    return 1;
+}
+
+int compare_policies(const Trace *trace, size_t frames, SimulationStats stats[3],
+                     StepObserver observer, void *context, char *error, size_t error_size)
+{
+    int policy;
+    for (policy = POLICY_FIFO; policy <= POLICY_OPT; ++policy)
+        if (!simulate(trace, frames, (ReplacementPolicy)policy, &stats[policy], observer, context, error, error_size)) return 0;
+    if (stats[POLICY_OPT].faults > stats[POLICY_FIFO].faults || stats[POLICY_OPT].faults > stats[POLICY_LRU].faults) {
+        (void)snprintf(error, error_size, "Internal comparison invariant failed: OPT has too many faults"); return 0;
+    }
+    return 1;
+}
+
+int scan_frame_range(const Trace *trace, size_t min_frames, size_t max_frames,
+                     SimulationStats (*rows)[3], char *error, size_t error_size)
+{
+    size_t frames;
+    if (rows == NULL || min_frames < 1 || min_frames > max_frames || max_frames > MAX_FRAMES) {
+        (void)snprintf(error, error_size, "Invalid Belady frame range"); return 0;
+    }
+    for (frames = min_frames; frames <= max_frames; ++frames) {
+        size_t row = frames - min_frames;
+        if (!compare_policies(trace, frames, rows[row], NULL, NULL, error, error_size)) return 0;
+        if (row > 0 && (rows[row][POLICY_LRU].faults > rows[row - 1][POLICY_LRU].faults ||
+                        rows[row][POLICY_OPT].faults > rows[row - 1][POLICY_OPT].faults)) {
+            (void)snprintf(error, error_size, "Internal stack-algorithm invariant failed: LRU/OPT faults increased"); return 0;
+        }
+    }
+    return 1;
 }
