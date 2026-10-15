@@ -262,9 +262,9 @@ static int test_next_use(void)
 static int test_next_use_against_scan(void)
 {
     uint32_t pages[257];
-    Trace trace = borrowed(pages, 257);
     size_t *next = NULL;
     for (size_t i = 0; i < 257; ++i) pages[i] = (uint32_t)((i * i + i * 17) % 31);
+    Trace trace = borrowed(pages, 257);
     REQUIRE(trace_next_use(&trace, &next, error, sizeof error));
     for (size_t i = 0; i < trace.count; ++i) {
         size_t expected = SIZE_MAX;
