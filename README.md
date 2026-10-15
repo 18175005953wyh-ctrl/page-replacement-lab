@@ -110,7 +110,7 @@ build\page_replacement_lab.exe --help
 
 工作流 `Page Replacement Lab tests` 在 push、pull_request 或手动触发时，对 `ubuntu-latest / Debug` 和 `windows-latest / Debug` 严格构建并运行测试。
 
-**远程 CI 尚未确认：仓库尚未发布。** 发布后应记录实际通过的提交编号和 Actions 运行链接；本地通过不能替代双平台远程结果。
+2026-10-15，提交 `e2043d4e937fc0e09cc4132a040554f2d0356ddd` 的 `ubuntu-latest / Debug` 和 `windows-latest / Debug` 均已通过严格构建与测试：[查看真实 CI 运行记录](https://github.com/18175005953wyh-ctrl/page-replacement-lab/actions/runs/38731053388)。本次修复使测试先填充页面数组、再创建 Trace，消除了 GCC 的可能未初始化警告，保留严格警告检查。
 
 ## 时间复杂度
 
